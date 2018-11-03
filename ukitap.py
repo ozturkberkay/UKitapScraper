@@ -7,7 +7,7 @@ from lxml import html
 # Berkay Öztürk
 class UKitapScraper:
 
-    def __init__(self, payload: dict):
+    def __init__(self):
         # User-Agent Spoofing
         self.ua = generate_user_agent(device_type="all", os=('linux', 'mac'))
 
@@ -18,13 +18,6 @@ class UKitapScraper:
         self.url = 'http://www.ukitap.com/'
         self.login_path = 'uye'
         self.cheap_path = 'ucuz-kitaplar/'
-
-        # Payload for our POST request to login
-        self.payload = {
-            'eposta': payload['eposta'],
-            'giris': 'Giri%C5%9F',  # URL encoded
-            'parola': payload['parola']
-        }
 
         # Proxy Variables 
         self.proxy_num_fetch = 10   # Range: 1-20
@@ -68,15 +61,21 @@ class UKitapScraper:
         print('Random Proxy Chosen: %s' % (random_proxy))
 
     # (POST) Starts the session and logins to the website
-    def login(self, use_proxies: bool):
+    def login(self, payload: dict, use_proxies: bool):
+        # Payload for our POST request to login
+        payload = {
+            'eposta': payload['eposta'],
+            'giris': 'Giri%C5%9F',  # URL encoded
+            'parola': payload['parola']
+        }
         with Session() as session:
             if use_proxies:
                 self.set_proxies()
             else:
                 self.proxies = None
             try:
-                r = session.post('%s%s' % (self.url, self.login_path), headers={'User-Agent': self.ua}, proxies=self.proxies, data=self.payload, timeout=self.timeout)
-                # We are making sure that:
+                r = session.post('%s%s' % (self.url, self.login_path), headers={'User-Agent': self.ua}, proxies=self.proxies, data=payload, timeout=self.timeout)
+                # Making sure that:
                     # 1) After the login request, there was a redirection (Status Code = 302)
                     # 2) Redirected page loaded successfully (Status Code = 200)
                     # 3) The loaded page is the home page
@@ -86,7 +85,7 @@ class UKitapScraper:
                     print('User %sLogged In!' % (doc.xpath('//li[@id="uye_menu_ana"]/span/text()')[0]))
                     return session
                 else:
-                    print('Login unsuccessful!')
+                    print('Login Unsuccessful!')
                     return False
             except RequestException as e:
                 print(e)
