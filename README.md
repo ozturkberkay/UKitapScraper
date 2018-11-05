@@ -32,9 +32,6 @@ session = uks.login(payload = {
 if session: 
     books = uks.get_books_by_price(session = session, price = 30, num_fetch = 100, use_proxies = False)
 
-    # Close the session
-    session.close()
-
     # Print the books in a format which won't hurt your eyes :)
     print(json.dumps(obj = books, indent = 2, ensure_ascii = False))
 ```
