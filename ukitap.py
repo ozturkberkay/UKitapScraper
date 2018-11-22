@@ -116,8 +116,7 @@ class UKitapScraper:
                                 books[i+((page-1)*max_books_per_page)] = {
                                     'title': row.xpath('.//td[2]/a[1]/text()')[0],
                                     'author': row.xpath('.//td[2]/a[2]/text()')[0],
-                                    # Getting rid of the " TL" and only storing the price value
-                                    'price': [int(s) for s in row.xpath('.//td[3]/text()')[0].split() if s.isdigit()][0]
+                                    'price': price
                                 }
                         # Predicting if a next page exists by querying the page navigation buttons
                         if num_fetch > 0 and len(doc.xpath('//ul[@class="sayfalar"]/li[last()]/a/text()')) == 0:
