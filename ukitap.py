@@ -74,12 +74,12 @@ class UKitapScraper:
             else:
                 self.proxies = None
             try:
-                r = session.post('%s%s' % (self.url, self.login_path), headers={'User-Agent': self.ua}, proxies=self.proxies, data=payload, timeout=self.timeout)
+                r = session.post('%s%s' % (self.url, self.login_path), allow_redirects=True, headers={'User-Agent': self.ua}, proxies=self.proxies, data=payload, timeout=self.timeout)
                 # Making sure that:
                     # 1) After the login request, there was a redirection (Status Code = 302)
                     # 2) Redirected page loaded successfully (Status Code = 200)
                     # 3) The loaded page is the home page
-                if len(r.history) != 0 and str(r.history[0]) == '<Response [302]>' and r.status_code == 200 and r.url == self.url:
+                if r.history and r.status_code == 200 and r.url == self.url:
                     doc = html.document_fromstring(r.content)
                     # Fetching the username, just to be fancy :)
                     print('User %sLogged In!' % (doc.xpath('//li[@id="uye_menu_ana"]/span/text()')[0]))
@@ -92,6 +92,7 @@ class UKitapScraper:
 
     # (GET) Fetch the books on sale by filtering them with a price tag
     def get_books_by_price(self, session, price: int, num_fetch: int, use_proxies: bool) -> dict:
+        if num_fetch < 1: return []
         with session:
             page = 1
             books = {}
@@ -105,7 +106,7 @@ class UKitapScraper:
                         # Alternative: if (len(doc.xpath('//tr')) == 1):
                         if (doc.xpath('//tr/td[last()] = //tr/td[1]')):
                             print('No books found at the price of %d₺. Ending the requests!' % (price))
-                            return books
+                            break
                         for i, row in enumerate(doc.xpath('//tr')[1:]):
                             if len(books) < num_fetch:
                                 # Making sure each book entry has the correct index value
@@ -119,9 +120,9 @@ class UKitapScraper:
                                     'price': price
                                 }
                         # Predicting if a next page exists by querying the page navigation buttons
-                        if num_fetch > 0 and len(doc.xpath('//ul[@class="sayfalar"]/li[last()]/a/text()')) == 0:
+                        if len(books) < num_fetch and not doc.xpath('//ul[@class="sayfalar"]/li[last()]/a/text()'):
                             print('No more pages avaiable! Ending the requests!\n%d books fetched in total.' % (len(books)))
-                            return books
+                            break
                         elif len(books) < num_fetch: page += 1
                 except RequestException as e:
                     print(e)
