@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from requests import get, post, Session, RequestException
 from user_agent import generate_user_agent
 from random import choice
@@ -99,7 +101,11 @@ class UKitapScraper:
             max_books_per_page = 50
             while len(books) < num_fetch:
                 try:
+                    # Making the GET request
                     r = session.get('%s%s%d/%d/' % (self.url, self.cheap_path, price, page), headers={'User-Agent': self.ua}, proxies=self.proxies, timeout=self.timeout)
+                    # Setting the character encoding to UTF-8
+                    r.encoding = 'utf-8'
+                    # Progressing if the response is OK
                     if r.status_code == 200:
                         print('Fetching books on sale for %d₺ on page %d...' % (price, page))
                         doc = html.document_fromstring(r.content)
